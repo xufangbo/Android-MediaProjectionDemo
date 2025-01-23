@@ -66,9 +66,12 @@ public class ScreenshotView extends FrameLayout {
                             ScreenshotView.this.setVisibility(GONE);
                             TaskPool.CACHE.execute(() -> {
                                 try {
-                                    Thread.sleep(200L);
+                                    Thread.sleep(500L);
+                                    /**
+                                     * 这里进行截图
+                                     */
                                     TaskPool.MAIN.post(MediaProjectionService::screenshot);
-                                    Thread.sleep(200L);
+                                    Thread.sleep(500L);
                                     TaskPool.MAIN.post(() -> ScreenshotView.this.setVisibility(VISIBLE));
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();

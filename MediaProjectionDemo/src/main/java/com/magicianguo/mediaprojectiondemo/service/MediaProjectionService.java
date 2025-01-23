@@ -1,5 +1,7 @@
 package com.magicianguo.mediaprojectiondemo.service;
 
+import static android.hardware.display.VirtualDisplay.*;
+
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -32,6 +34,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class MediaProjectionService extends Service {
@@ -74,26 +77,65 @@ public class MediaProjectionService extends Service {
         running = true;
     }
 
+    /**
+     * 这是截屏用的
+     */
     private static void createImageReaderVirtualDisplay() {
-        if (mMediaProjection != null) {
-            DisplayMetrics dm = WindowHelper.getRealMetrics();
-            mImageReader = ImageReader.newInstance(dm.widthPixels, dm.heightPixels, PixelFormat.RGBA_8888, 1);
-            mImageReader.setOnImageAvailableListener(reader -> {
+        if (mMediaProjection == null) {
+            Log.e(TAG, "mMediaProjection is null");
+            return;
+        }
+
+        DisplayMetrics dm = WindowHelper.getRealMetrics();
+//        mImageReader = ImageReader.newInstance(dm.widthPixels, dm.heightPixels, PixelFormat.RGBA_8888, 10);
+        try {
+            mImageReader = ImageReader.newInstance(dm.widthPixels, dm.heightPixels, PixelFormat.RGBA_8888, 2); // 尝试增加缓冲区数量
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to create ImageReader: " + e.getMessage());
+            // 如果创建失败，考虑降级处理或其他替代方案
+        }
+        mImageReader.setOnImageAvailableListener(reader -> {
+                Log.e(TAG, "Image available in ImageReader");
                 mImageAvailable = true;
             }, null);
-            mMediaProjection.registerCallback(MEDIA_PROJECTION_CALLBACK, null);
-            mVirtualDisplayImageReader = mMediaProjection.createVirtualDisplay("ImageReader", dm.widthPixels, dm.heightPixels, dm.densityDpi, Display.FLAG_ROUND, mImageReader.getSurface(), null, null);
-        }
+        mMediaProjection.registerCallback(MEDIA_PROJECTION_CALLBACK, null);
+
+        mVirtualDisplayImageReader = mMediaProjection.createVirtualDisplay("ImageReader",
+                dm.widthPixels,
+                dm.heightPixels,
+                dm.densityDpi,
+                Display.FLAG_ROUND,
+                mImageReader.getSurface(),
+                null,
+                null);
     }
 
+
     public static void createProjectionVirtualDisplay() {
+
         if (mMediaProjection != null && ProjectionView.isSurfaceCreated()) {
+
+            //
             DisplayMetrics dm = WindowHelper.getRealMetrics();
             if (mVirtualDisplayProjection != null) {
                 mVirtualDisplayProjection.release();
             }
+
+            //
+            Surface surface = WindowHelper.getProjectionSurface();
+
             mMediaProjection.registerCallback(MEDIA_PROJECTION_CALLBACK, null);
-            mVirtualDisplayProjection = mMediaProjection.createVirtualDisplay("Projection", dm.widthPixels, dm.heightPixels, dm.densityDpi, Display.FLAG_ROUND, WindowHelper.getProjectionSurface(), null, null);
+
+            //
+            mVirtualDisplayProjection = mMediaProjection.createVirtualDisplay(
+                    "Projection",
+                    dm.widthPixels,
+                    dm.heightPixels,
+                    dm.densityDpi,
+                    Display.FLAG_ROUND,
+                    surface,
+                    null,
+                    null);
         }
     }
 
@@ -145,12 +187,12 @@ public class MediaProjectionService extends Service {
     public static void screenshot() {
         if (!mImageAvailable) {
             Log.e(TAG, "screenshot: mImageAvailable is false");
-            ToastUtils.shortCall("截屏失败");
+            ToastUtils.shortCall("截屏失败1");
             return;
         }
         if (mImageReader == null) {
             Log.e(TAG, "screenshot: mImageReader is null");
-            ToastUtils.shortCall("截屏失败");
+            ToastUtils.shortCall("截屏失败2");
             return;
         }
         try {
@@ -181,6 +223,8 @@ public class MediaProjectionService extends Service {
 
             String fileName = createScreenshotFileName();
             File file = new File(App.getApp().getExternalFilesDir(null).getParent(), fileName);
+            Log.i(TAG,file.getAbsolutePath());
+
             if (!file.exists()) {
                 file.createNewFile();
             }
@@ -197,7 +241,7 @@ public class MediaProjectionService extends Service {
     }
 
     private static String createScreenshotFileName() {
-        return "Screenshot-"+getDateStr()+".png";
+        return "screenshot-"+getDateStr()+".png";
     }
 
     private static String createVideoFileName() {
@@ -205,14 +249,16 @@ public class MediaProjectionService extends Service {
     }
 
     private static String getDateStr() {
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH) + 1;
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int minute = calendar.get(Calendar.MINUTE);
-        int second = calendar.get(Calendar.SECOND);
-        return String.format("%d%02d%02d%02d%02d%02d", year, month, day, hour, minute, second);
+        Date date = new Date();
+        return String.valueOf(date.getTime());
+//        Calendar calendar = Calendar.getInstance(Locale.CHINA);
+//        int year = calendar.get(Calendar.YEAR);
+//        int month = calendar.get(Calendar.MONTH) + 1;
+//        int day = calendar.get(Calendar.DAY_OF_MONTH);
+//        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+//        int minute = calendar.get(Calendar.MINUTE);
+//        int second = calendar.get(Calendar.SECOND);
+//        return String.format("%d%02d%02d%02d%02d%02d", year, month, day, hour, minute, second);
     }
 
     @Override

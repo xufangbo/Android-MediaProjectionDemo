@@ -52,13 +52,16 @@ public class WindowHelper {
         });
     }
 
+    // < 添加悬浮框
     public static void showScreenshotView() {
         if (mScreenshotViewShowing) {
             return;
         }
+        // WINDOW_MANAGER： ViewManager
         WINDOW_MANAGER.addView(SCREENSHOT_VIEW, SCREENSHOT_VIEW_PARAMS);
         mScreenshotViewShowing = true;
     }
+
 
     public static void hideScreenshotView() {
         if (!mScreenshotViewShowing) {
@@ -67,6 +70,8 @@ public class WindowHelper {
         WINDOW_MANAGER.removeView(SCREENSHOT_VIEW);
         mScreenshotViewShowing = false;
     }
+
+    // > 添加悬浮框
 
     public static void showProjectionView(Activity activity) {
         if (mProjectionViewShowing) {
@@ -108,12 +113,17 @@ public class WindowHelper {
     }
 
     public static boolean checkOverlay(Activity activity) {
+
+        // 用于检查应用是否具有绘制覆盖层（即在其他应用之上显示内容）的权限。这个权限允许应用程序创建窗口，
+        // 这些窗口会浮在所有其他应用程序的窗口之上，
+        // 这对于实现类似悬浮窗、屏幕覆盖通知、或是在屏幕上添加持久性 UI 元素等功能是非常有用的。
         if (Settings.canDrawOverlays(activity)) {
             return true;
         } else {
             ToastUtils.longCall("请开启悬浮窗权限！");
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
-                    .setData(Uri.parse("package:"+activity.getPackageName()));
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+            intent.setData(Uri.parse("package:"+activity.getPackageName()));
+
             activity.startActivity(intent);
             return false;
         }

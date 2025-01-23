@@ -34,9 +34,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initView() {
+
+        // < start  MediaProjection  预测；投影视图；投影线；影射；投射 投射；投射效应
         binding.btnStart.setOnClickListener(v -> {
-            if (MediaProjectionService.serviceType == ServiceType.VIDEO &&
-                    checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            if (MediaProjectionService.serviceType == ServiceType.VIDEO && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                 ToastUtils.shortCall("录屏需要录音权限！");
                 TaskPool.MAIN.postDelayed(() -> {
                     requestPermissions(new String[]{ Manifest.permission.RECORD_AUDIO }, RequestCode.RECORD_AUDIO);
@@ -48,6 +49,9 @@ public class MainActivity extends AppCompatActivity {
         binding.btnStop.setOnClickListener(v -> {
             MediaProjectionHelper.stop();
         });
+        // > end  MediaProjection
+
+        // < start screenshot
         binding.btnShowScreenshot.setOnClickListener(v -> {
             if (WindowHelper.checkOverlay(this)) {
                 WindowHelper.showScreenshotView();
@@ -58,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
                 WindowHelper.hideScreenshotView();
             }
         });
+        // > end screenshot
+
         binding.btnShowProjection.setOnClickListener(v -> {
             if (WindowHelper.checkOverlay(this)) {
                 WindowHelper.showProjectionView(this);
